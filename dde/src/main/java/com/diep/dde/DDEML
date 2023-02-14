@@ -1,0 +1,19 @@
+https://docs.microsoft.com/en-us/windows/win32/dataxchg/about-the-ddeml
+
+1. Dynamic Data Exchange Management Library (DDEML)
+*  provides an interface that simplifies the task of adding DDE capability to an application
+instead of sending, posting, processing DDE messages directly
+
+* Allow server app to register service name and broadcast to system.
+Other apps can use the name to connect to server
+
+* Manage shared memory using string handles (to identify string) and data handles (to identify memory object),
+instead of atoms and pointers
+
+* to use DDEML, you must
+    include DDEML.h header file in your source files
+    link with USER32.LIB file
+    ensure that DDEML.dll file resides in the system's path
+
+2. JDDE
+JNI-based free open source Java lib for Java apps to communicate with native app on Windows platform via DDE

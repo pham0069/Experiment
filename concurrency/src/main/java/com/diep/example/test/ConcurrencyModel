@@ -1,0 +1,37 @@
+http://tutorials.jenkov.com/java-concurrency/concurrency-models.html
+1. Concurrency model:
+- how threads collaborate to complete the given task
+- similar to distributed model
+
+2. Parallel workers
+* 1 delegator distributes the incoming jobs to different workers
+Workers work in parallel to complete the full job
+
+* Disadv
+- shared state can get complex.
+- potential issues like race condition, deadlock, throughput
+- data solutions are not perfect: blocking DS, non-blocking DS, persistent data
+- stateless worker, who does not keep state internally, has to re-read everytime data is needed
+- non-deterministic job ordering: hard to reason about system state, hard to ensure 1 task exec before another
+
+3. Assembly line (reactive, event driven system)
+* Workers are put in chain, each performing part of full job
+When that part is finished, the worker forwards the job to the next worker
+Each worker runs in its own thread and not share states with other workers
+Each worker works as much as it can until it has to start IO operation
+
+* Adv
+- no shared state
+- better hw conformity
+single-threaded code  can use optimized DS that works well on single-thread mode
+single-threaded code can cache data memory
+- job ordering is possible
+
+* Disadv:
+- thread spread over multiple jobs/classes
+- harder to read and write code: callback hell
+
+4. Functional parallelism
+* Function call is similar to sending a message, where all parameters passed to function are copied
+
+

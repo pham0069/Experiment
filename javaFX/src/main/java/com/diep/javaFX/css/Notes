@@ -1,0 +1,16 @@
+1. Why CSS?
+Clean way to separate content and design
+1 content can have multiple styles
+Switching style is easy
+
+2. Default CSS stylesheet
+If no styling specified, default to Modena, located in JavaFX JAR file
+
+3. Scene CSS stylesheet
+Style applied to all JavaFX components added to scene graph for that scene object
+
+4. Parent-specific CSS stylesheet
+Style applied on parent and all its components inside
+
+5. Component CSS stylesheet
+Style directly applied on component

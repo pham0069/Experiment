@@ -1,0 +1,31 @@
+https://developer.ibm.com/articles/j-java-streams-2-brian-goetz/
+
+1. Reduction
+
+* Reduction is folding technique from functional programming:
+
+* Given sequence X = {x1, x2, ... xn} and binary operation T (presented by (a, b))
+Reduction of X under T is:
+(((x1, x2), x3)..., xn)
+
+* A binary operator is associative if grouping doesnt matter
+((a, b), c) = (a, (b, c)
+
+* If binary operator is associative, reduction can be safely performed in any order, which facilitate parallel execution
+If identity value is not identity and operator is not associative, parallel execution result could be arbitrary
+
+* Reduction is simple, flexible, parallelizable, operates at a higher level of abstraction than imperative accumulation
+
+2. Mutable reduction ~ collect
+
+* Mutable reduction is a means to
+    produce an empty result container
+    incorporate new element into result container
+    merge two result containers
+
+* Customized collector <T, A, R> includes
+    Supplier<A>         create empty result container
+    BiConsumer<A, T>    populate element into container
+    BinaryOperator<A>   merge two result containers
+    Function<A, R>      convert intermediate container to final representation
+

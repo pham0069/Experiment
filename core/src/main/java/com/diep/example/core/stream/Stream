@@ -1,0 +1,81 @@
+https://developer.ibm.com/articles/j-java-streams-1-brian-goetz/
+https://developer.ibm.com/articles/j-java-streams-2-brian-goetz/
+https://developer.ibm.com/articles/j-java-streams-4-brian-goetz/
+https://developer.ibm.com/articles/j-java-streams-5-brian-goetz/
+
+1. Lambda expression
+----------------------
+* allow expressing behavior as data
+* in turn making it possible to develop more expressive and more powerful libraries
+
+2. Why Stream?
+----------------
+* com.diep.core.stream exploits the most powerful computing principles: composition
+* com.diep.core.stream complicated queries can be composed from simple building blocks (filter, map, sort..)
+--> easier to read and write, compared to loop
+* Practical separation of concerns
+    - client in charge of specifying 'what' computation
+    since client has better understanding of the problem domain
+    - library writer  has control over 'how'
+    lib writer has more expertise in algorithmic properties of execution
+* Key enabler fo this separation of concerns is ability to express behavior as data
+    - client can express the structure of complex calculation
+    - library uses the expression to choose the strategy
+
+* Expressing a com.diep.core.stream pipeline as a series of functional transformation enables useful execution strategies:
+    laziness:           only setup pipeline without initiating any work
+    parallelism:        makes use of multiple threads
+    short-circuiting:   terminate early without examining all data
+    operation fusion:   multiple operations can be executed in single pass on data (e.g. stateless ops)
+
+3. Comparison
+
+Collection                                      |       Stream
+-----------------------------------------------------------------------------------------------------------------------
+data structure                                  |   concern about computation, not data
+concern about organization of data in memory    |   no storage for elements processed
+persist over a period of time                   |   life-cycle is like a point of time, where terminal op is invoked
+can not be infinite                             |   can be infinite
+operations are eager and mutative               |   only terminal op is eager, others are lazy
+
+
+
+Imperative (Loop)                               |       Declarative (Stream pipeline)
+-----------------------------------------------------------------------------------------------------------------------
+* code is declared imperatively                 |   * code
+i.e. step-by-step procedure how to compute      |
+* materialize collections for intermediate      |   * fuses operation in as few passes as possible
+calculation result, which clutter the code and  |   produces elements lazily, compute elements as needed, feed them
+the execution (consume compute cycle, discarded |   directly to the next stage
+later, need GC)                                 |
+* follow breadth-first strategy                 |   * follows depth-first strategy: data are prone in cache
+* switching to parallel is expensive, error-prone|  * switching is easy with minimal changes as underlying work is
+                                                    implemented by library
+
+In summary, declarative (com.diep.core.stream) is preferred to imperative (loop) for several reasons:
+1. the code is clearer as com.diep.core.stream is cleanly factored into composition of operations
+2. The code is declared declaratively (described the desired result)
+rather than imperatively (step-by-step procedure of how to compute the result)
+ * allowing library to define and execute the best strategy for us
+ * 3. The code scales better when query gets more complicated
+
+4. Parallelism
+----------------
+* Most com.diep.core.stream operations require lambdas passed to them are:
+    - non-interfering:  wont modify the com.diep.core.stream source
+    - stateless         wont read/write any state that might change during lifetime of com.diep.core.stream ops
+* This restriction ensures computation is correct if com.diep.core.stream is executed in parallel
+Even if you are using sequential execution only,
+It's best to express your com.diep.core.stream pipeline such that they are correct regarless of execution strategy
+
+* It's best if passed lambdas are:
+    - side-effect free:     not mutate any heap-based state or perform any IO
+    - if there's side-effect, it's user responsibility to provide coordination to ensure such effect is thread-safe
+* It's not guaranteed that side effect is executed
+        ==============================================================
+        int count = anArrayList.com.diep.core.stream()
+               .map(e ‑> { System.out.println("Saw " + e); e })
+               .count();
+        ==============================================================
+Since map() is known to be size preserving, library can optimize by not performing map at all
+

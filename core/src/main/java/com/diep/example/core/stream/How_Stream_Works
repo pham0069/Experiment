@@ -1,0 +1,175 @@
+https://developer.ibm.com/articles/j-java-streams-3-brian-goetz/
+
+1. Stream pipeline
+--------------------
+* A com.diep.core.stream pipeline is composed of:
+    - com.diep.core.stream source
+        collection, array, generator function...
+    - zero or more intermediate operations: transform one com.diep.core.stream to another com.diep.core.stream
+        filter(filter), transform(flatMap, map), sort(sort), truncate(limit)...
+    - one terminal operation:
+        aggregations (reduce, collect), search (findFirst), iteration (forEach)
+
+* Stream pipeline construction is lazy
+    - constructing a com.diep.core.stream source (e.g. new ArrayList().com.diep.core.stream()) doesn't compute elements of com.diep.core.stream
+    instead captures how to find the elements when necessary
+
+    - invoking an intermediate operation doesn't perform any computation on the elements
+    merely adds another operation to the end of the com.diep.core.stream description
+
+    - only when terminal operation is invoked does the pipeline actually perform the work:
+        compute elements
+        apply intermediate ops
+        apply terminal ops
+--> this allows optimization possible
+
+
+2. Spliterator: abstraction for com.diep.core.stream sources
+------------------------------------------------
+* It has 2 behaviors:
+    accessing elements of sources (iterating)
+    decomposing input source for parallel execution (splitting)
+
+* Similar to Iterator but not extending Iterator
+* methods
+    boolean tryAdvance():   tries to process current element
+                            if no elements remain, tryAdvance() returns false
+                            otherwise it advances the cursor and pass current element to provided handler, and returns true
+    void forEachRemaining():tries to process all the remaining elements,
+                            passing them one at a time to the provided handler
+
+    Spliterator trySplit(): tries to split the remaining elements into 2 sections, ideally of similar size
+                            if spliterator can be split, initial portion is sliced off into a spliterator
+                            otherwise, return null, i.e. caller has to execute operation in sequential order
+
+    For sources whose encounter order is important, trySplit() must preserve this order
+
+
+3. How com.diep.core.stream pipeline is constructed
+---------------------------------------
+* A com.diep.core.stream pipeline is constructed as a linked list of source and intermediate ops
+Each stage of this pipeline is described by com.diep.core.stream flags, used for construction and execution of com.diep.core.stream
+
+* Stream flags
+    SIZED       size of com.diep.core.stream is known
+    DISTINCT    elements are distinct (== for primitive, Object.equals() for object)
+    SORTED      elements are sorted
+    ORDERED     com.diep.core.stream has encounter order (i.e. the order that a source dispenses element is important or not)
+Spliterator provides larger set of flags than com.diep.core.stream
+
+* Each intermediate operation has a known effect on com.diep.core.stream flags
+e.g.    filter() preserves SORTED, DISTINCT but clears SIZED
+        map() preserves SIZED, but clear DISTINCT, SORTED
+        sorted() preserves SIZED, injects SORTED
+        unorder() preserves SIZED, DISTINCT, clears SORTED
+
+4. How com.diep.core.stream pipeline is executed
+------------------------------------
+* When terminal op is initiated, com.diep.core.stream implementation picks an execution plan
+
+* Intermediate ops are divided into 2 types
+    - stateless (filter, map, flatMap)
+    can be performed on one element without knowing about other elements
+    - stateful (sorted, limit, distinct)
+    must see all elements to execute op
+
+* If pipeline is executing sequentially, or executing in parallel with all stateless operations
+--> it can be computed in single pass
+Otherwise, pipeline is divided into sections (at stateful op boundaries) and computed in multiple passes
+
+* Terminal ops are either
+    - short-circuiting (allMatch, findFirst)
+    data is processed one element at a time (using tryAdvance())
+
+    - or non-short-circuiting (reduce, collect, forEach)
+    data can be processed in bulk (using forEachRemaining()) to further reduce the overhead of accessing each element
+
+* For sequential execution, com.diep.core.stream constructs a 'com.diep.core.stream machine' i.e. chain of Consumer objects
+each consumer knows about the next stage
+when it receives an element, it sends zero or more elements to the next stage
+
+    - consumer associated with stateless operation
+    directly applies function on the received element and sends result (or not) to the next stage
+    - consumer associated with stateful operation
+    buffers elements until end of input, applies function on the whole input and send result to the next stage
+The final stage implements terminal operation
+
+* For parallel execution, instead of creating a single machine,
+each worker thread gets its own copy of the machine and feeds its section of the data to it
+the result of each per-thread machine is merged with the results of others to produce a final result
+
+5. Encounter order
+-------------------
+* If a com.diep.core.stream has encounter order, most com.diep.core.stream ops must respect that order
+* For sequential executions, encounter order is preserved for free, since all elements are naturally processed in the
+order in which they're encountered
+* Certain operations (stateless and reduce()) can preserve encounter order at no cost (even in parallel)
+* Other operations (stateful and terminal ops whose semantics are tied to encounter order such as findFirst,
+forEachOrdered), the obligation to respect encounter order in parallel execution can be significant
+
+Parallel execution for unordered com.diep.core.stream could much more efficient than that for ordered com.diep.core.stream
+* limit()
+    - for unordered source: streams can pick up any N elements.
+    The only cost is a coordination semaphore to ensure target com.diep.core.stream length is not exceeded
+
+    - for ordered source: each section has to wait for the previous section's result
+    to determine if its own section should be included in the final result or not
+    This cannot exploit the efficiency of parallelism
+
+* sort() in context of parallel execution:
+    - for unordered source: sorting algo could be unstable
+    - for ordered source has to be stable (to ensure the order of equal objects as in ordered com.diep.core.stream)
+
+* distinct():
+    - for ordered source: if there are multiple equal input elements, must emit the first encountered
+    - for unordered source: can return any of them
+
+
+
+6. Optimization in com.diep.core.stream
+---------------------------
+* In some cases, flags make it possible to elide an operation entirely, as in below pipeline
+
+            ============================================================
+            TreeSet<String> ts = ...
+            String[] sortedAWords = ts.com.diep.core.stream()
+                                        .filter(s -> s.startsWith("a")
+                                        .sorted()
+                                        .toArray()
+             ===========================================================
+ts has SORTED flag on (as tree set), filter() preserve SORTED flag. Hence sorted() can be ignored and become no-op
+
+* Presizing optimization depends on SIZED flag
+e.g. SIZED flag on allows toArray() terminal operation to pre-allocate the correct size array
+without SIZED flag, it has to guess the array size and possibly copy the data if the guess is wrong
+
+* For parallel com.diep.core.stream execution, SUBSIZED can be used for optimization
+Let's say each sub-spliterator is assigned with a fixed sub-size, such that it does not only knows the size but also the
+location of the sub-com.diep.core.stream in the merged result. toArray() can preallocate the size of array to store final result, and
+individual threads can write their result to the correct position of this merged result, without synchronization
+
+* If a com.diep.core.stream has ORDERED flag but that order does not matter in final operation, parallel execution can be sped up by
+removing ORDERED flag
+
+7. Creating streams
+---------------------
+* To create a com.diep.core.stream from a datasource, you have to:
+    create a Spliterator from the com.diep.core.stream's elements
+    pass it to StreamSupport.com.diep.core.stream()
+    with a flag to indicate whether the resulting com.diep.core.stream should be sequential or parallel
+* Consideration aspects for spliterator:
+    - can report accurate size?
+    - can report relevant characteristics?
+    - can split the input at all? or to roughly equal sizes?
+    - are the sizes of splits predictable?
+
+* Trade-off between implementation and performance
+    - easiest but poorest performance:
+    passing Iterator to Spliterators.spliteratorUnknownSize()
+    - slightly better:
+    passing Iterator and a size to Spliterators.spliterator
+    - if parallel performance is important, include all characteristics
+    Refer to ArrayList, TreeSet, HashMap spliterators
+
+
+

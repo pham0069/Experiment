@@ -1,0 +1,25 @@
+1. Initial thread
+- std program: single main thread invoking main()
+- applet: 1 or multiple threads (depending on impl) invoking init() and start()
+- Swing program: initial GUI creation should be scheduled to be executed by EDT
+After that program is primarily driven by GUI events
+
+2. EDT (Event Dispatch Thread)
+- EDT:
+    handle Swing events
+    invoke most Swing methods
+- use single thread model as most Swing objects are not thread-safe
+- invoking Swing objects from multiple threads is normally not safe (race condition, memory visibility)
+other threads can schedule task for Swing using SwingUtilities.invokeLater() or invokeAndWait()
+- task on EDT should finish quickly, otherwise UI becomes unresponsive as events are not handled
+
+3. SwingWorker:
+- used to execute long-running task in the background
+- 3 threads involved
+    + initial thread: call SwingWorker.execute() to schedule the task on worker thread
+    + worker thread: execute SwingWorker.doInBackground(), firePropertyChange(), return value to other thread, publish i
+ntermediate result
+    + EDT: execute SwingWorker.done() when worker thread finishes the task, SwingWorker.process() when worker thread
+publishes intermediate results, and notify PropertyChangeListeners
+
+

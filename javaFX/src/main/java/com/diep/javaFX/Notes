@@ -1,0 +1,23 @@
+http://tutorials.jenkov.com/javafx/index.html
+
+1. Rich Internet Applications (RIA)
+- web apps with better visual experience, rich-feature content
+- graphical presentation is handled on client side
+- delivered as web plugin or VM
+- tech used to develop RIA: Adobe Flash, MS Silverlight, JavaFX
+
+2. JavaFX
+- Java lib to build RIA, GUI apps
+- JavaFXPorts project makes JavaFX run on mobile devices
+- Features:
+    + styled with CSS, composed with FXML
+    + support 2D, 3D, chart, WebView
+    + compatible with Swing
+
+3. Desktop app when?
+needs access to local disk, communicate via other ntw protocols than HTTP, features not offer by web protocol
+- Developer tools: IDE, editors, file compression, encryption
+- Local system maintenance tools: backup, virus scan
+- Utility apps: Skype, messenger, photo/video edit, video/audio players/edit
+- Game
+

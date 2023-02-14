@@ -1,0 +1,22 @@
+https://docs.oracle.com/javafx/2/api/javafx/fxml/doc-files/introduction_to_fxml.html
+1. FXML
+script, XML-based markup language to construct Java Object graphs
+
+2. Class instance element
+class that adheres to JavaBean constructor and property naming conventions can be instantiated with FXML
+Otherwise, they can be constructed using 'builder'
+fx:value used to initialize instance of a type that does not have default constructor but provides static
+valueOf(String) method like String, Double, Boolean
+
+fx:factory, Javafx.util.Builder
+fx:include create object from another fxml file
+fx:constant create reference to class constant
+fx:reference create reference to existing element
+fx:copy     create a copy of existing element
+fx:root     create reference to previously defined root element
+
+3. Property of class instance element
+
+- static property
+- define block
+- block of script code

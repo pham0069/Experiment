@@ -1,0 +1,63 @@
+1. Process vs Thread
+
+* Process
+- self-contained execution environment: own memory space
+- normally synonym to app/program
+- use IPC (pipe, socket) to communicate among processes
+
+* Thread
+- light-weight process with fewer resources:
+share process resources such as memory, open files
+- sharing allows efficiency but also problematic
+------------------------------------------------------------------------------------------------------------------------
+2. Java threads
+
+* When Java program runs, it is started in main thread
+From main thread, u can create additional threads.
+
+* Each thread is associated with a Thread object.
+Threads can be directly created explicitly or managed in executors
+------------------------------------------------------------------------------------------------------------------------
+3. Multithreading benefits
+
+* Better resource utilization
+CPU can be doing other things while waiting for IO (network, disk)
+
+* Simpler program design in some situations
+Each thread focuses on one aspect of task
+
+* More responsive programs
+- Server design: single thread listens and processes requests
+vs 1 thread listening to requests and passing requests to worker threads who process them
+- UI design: single thread listens and processes user action on UI components
+vs handoff long processing task to worker thread
+------------------------------------------------------------------------------------------------------------------------
+4. Multithreading cost
+
+* More complex design
+Code executed by multiple threads accessing shared data need special attention
+Errors arising from incorrect thread sync can be very hard to detect, reproduce and fix
+
+* Context switching overhead
+When switching threads, CPU need to save local data, program pointer of current thread
+
+* Increased resource consumption
+Resources needed: memory to keep local stack
+
+5. Concurrency vs Parallelism
+
+* Parallelism
+- app is split up to smaller subtask
+- subtasks are processed in parallel, by multiple CPUs at same time
+
+* Concurrency
+- app is making progress on more than one task at the same time
+- if single CPU available, only a task is being processed at a time
+- no need to finish one task before beginning the next one
+
+1 app could be:
+- neither concurrent nor parallel: no subtask
+- concurrent but not parallel: multiple tasks processed at same time, but tasks not divided into sub-tasks
+- parallel but not concurrent: tasks are divided into sub-tasks, but multiple tasks not processed at same time
+- both concurrent and parallel: not advisable, CPU maybe busy enough
+

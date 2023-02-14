@@ -1,0 +1,92 @@
+Security Manager
+- object defining security policy for an app
+- policy specifies actions that are unsafe or sensitive
+- actions not allowed by security policy causes SecurityException to be thrown
+- an app can query security manager to discover which actions are allowed
+
+------------------
+SSL (Secured Socket Layer)
+- use encryption to protect data
+- SSL cert is used as identity of website's owner
+- work on top of TCP and below application layer
+TLS (Transport Layer Security)
+- successor of SSL
+
+------------------
+Java keystore
+- holds cert to identify us
+- store (private key - public key - cert) as alias for easy lookup
+- sign with private key - authenticate by public key
+encrypt with public key - decrypt by private key
+- we'll use keystore when we are a server and wants to use HTTPs
+- during a handshake, server looks up private key from keystore
+and present its public key and cert to client
+-------------------
+Keystore file is password-protected file
+- default format is JKS til Java 8 (Java-specified format)
+- from Java 9, default keystore format is PKCS12
+language-neutral way of storing encrypted private keys and certificates
+
+--------------------
+Trust store
+- holds certs to identify others
+- Java client lookup the associated cert in trust store
+if the cert or cert authorities (CA) presented by the external server is not in trust store,
+we will throw SSLHandshakeException and the connection wont be setup successfully
+- Java has bundled a truststore called cacerts and it resides in
+$JAVA_HOME/jre/lib/security directory
+
+--------------------
+JSSE (Java Secure Socket Extension)
+- provide framework and implementation for Java version of SSL/TLS)
+- include functionality: data encryption, server authentication, message integrity, client authentication
+
+--------------------
+certificate
+- digitally signed statement vouching the identity and public key of an entity
+- can be self-signed or issued by cert authority
+- well-known CA: VeriSign, Entrust, GTE CyberTrust
+- X509 is common cert format managed by JDK's keytool
+--------------------
+key manager
+- manage keystore and supplies public key to others
+keystore
+- DB of key materials: key entries and trusted cert entries
+- key entry = identity + private key
+- cert entry = identity + public key
+trust store
+- make decisions about what to trust
+- add entry to trust store if user trusts that entity
+by importing cert
+
+-----------------------
+good practice to have 2 different keystore files:
+- 1 for key entries + store with restricted access
+- 1 for cert entries + store with public access
+-----------------------
+message authentication code (MAC)
+- generated from message, crypto hash function and secret key
+- allows the other side to check the integrity of information
+with sender's public key
+-----------------------
+SSL handshake
+1. negotiate cipher suite
+- crypto algo, key sizes
+- client tells server which cipher suites it has available,
+server chooses the mutual best
+2. authenticate server's identity
+- in SSL, authentication is optional
+- in e-commerce transaction, client prefers to authenticate server
+- server sends its pk cert to client
+- client and server exchange info to agree on same secret key
+3. agreeing on encryption mechanism
+- use secret key and crypto hash function -> generate HMAC
+- use secret key and secret key algo -> encrypt data + HMAC
+--------------------------
+SSL Engine
+- abstraction of I/O transport mechanism
+allows using SSL/TLS in transport-independent way
+developer can choose blocking/non-blocking
+- app pass data to SSLEngine
+SSLEngine produces encoded data
+puts it to network buffer

@@ -1,0 +1,86 @@
+https://docs.microsoft.com/en-us/windows/win32/dataxchg/about-dynamic-data-exchange
+
+1. Dynamic Data Exchange (DDE)
+A protocol that allows applications to transfer data, using shared memory
+can be used as once-time transfer
+or ongoing data transfer (vs Clipboard typically only one-time data transfer)
+
+Windows has message-based architecture
+    Passing message is most appropriate method for app to transfer info
+    Message has 2 parameters wParam and iParam
+    DDE defines how apps should use these parameters to pass data (larger than string)
+    by means of:
+        - global atoms: reference to char string
+        - shared memory handles
+
+2. Client and server interaction
+* DDE always occur btw a client app and a server app
+* DDE client app inits the exchange by establishing a conversation with server
+to send transaction to server
+* Transaction
+    request for data or services
+* DDE server app responds to transactions by providing data or services to client
+
+* For example:
+    a graphic app contains a bar showing a coorp's quarterly profits
+    the data for the app may be contained in a spreasheet app
+    graphic app (client) could establish conversation with spreadsheet app (server)
+    so that graphic app can get updated figures and update the bar accordingly
+
+3. Concepts
+
+Atom
+    Atom table is collection of string put by apps
+    Each string is called atom name
+    Each string is assigned with 16-bit int, called atom, used to access the string
+    DDE apps exchange global atom, instead of string value
+    Apps use local atom table to store its own item names
+    Implemented as hash table with 37 initial buckets by default
+
+Service name
+    a string a server app responds to when a client attempts to establish a conversation with a server
+
+Topic name
+    a string to identify the logical data context
+    for server that operate on file-based document, topic names are typically filenames
+    for other server, they are other application-specific strings
+
+Item name
+    a string to identify a unit of data a server can pass to a client during a transaction
+    For example, an item name might identify an integer, a string, some texts, bitmap
+
+
+https://docs.microsoft.com/en-us/windows/win32/dataxchg/using-dynamic-data-exchange
+
+4. DDE protocol: Init a conversation
+* Client prepares atoms for server name and topic name
+* Client send a WM_DDE_INITIATIVE message, with these 2 atoms in iParam
+* System directs this message to all active servers
+* If the server name and topic name matches, server returns positive WM_DDE_ACK message,
+with server handle in wParam
+* Otherwise it does nothing. After processing INITIATIVE message, server returns control to system
+* After all servers have processed INITIATIVE messages, client delete global atoms
+* Receiving ACK message, client saves server handle
+it would send subsequent DDE messages to server window identified by this handle
+
+5. DDE protocol: Retrieve an item
+* Client retrieves an item by sending WM_DDE_REQUEST message by specifying the item and format to retrieve
+using global atoms
+* If server has access to item and can render request, it copies data to shared memory
+and sends back WM_DDE_DATA message
+* Client tries to process data and if success, it send back WM_DDE_ACK to server (if required)
+
+6. DDE protocol: Submit an item
+* Client submits an item by sending WM_DDE_POKE message
+
+7. DDE protocol: Establish permanent link
+* Client can establish a permanent link to an item in server app
+such that server will update client on change in item
+the streaming data connection btw client and server will stay on unless explicitly closed
+
+* Client sends WM_DDE_ADVISE request to server, to ask server to notify it on any change in data
+* If server has access to requested data and can render the request, it sends positive WM_DDE_ACK
+If cannot service, sends back negative WM_DDE_ACK
+* Server normally rejects a link request to an item that has been linked
+* Client terminates a link by sending WM_DDE_UNADVISE message
+

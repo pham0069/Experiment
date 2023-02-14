@@ -1,0 +1,22 @@
+1. Java Cryptography Extension (JCE)
+JCE used to be separate from Java platform due to US restriction
+Strongest security algorithms are only available to US company
+Others need to implement their own or use weaker algorithm
+
+2. Java Cryptography Architecture (JCA)
+Security implementations are provided by providers
+You can implement your own provider but could be bound to security holes
+Better use built-in provider or use well-established provider like Bouncy Castle
+
+3. Provider
+To use Java crypto API, u need Provider set
+By default, Java SDK provider is used
+
+4. Key security
+Keys should be hard to guess so an attacker cannot easily guess the encryption key.
+If they key is easy to guess, it is easy for an attacker to decrypt the encrypted data
+and possibly create fake messages herself.
+
+It is important to make a key hard to guess. Thus, a key should consist of random bytes.
+The more random, the better, and the more bytes,
+the harder to guess because there are more possible combinations.

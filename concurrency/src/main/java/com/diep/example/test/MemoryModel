@@ -1,0 +1,51 @@
+http://tutorials.jenkov.com/java-concurrency/java-memory-model.html
+
+2 types of memory
+
+1. Stack
+- Each thread running in JVM has its own thread stack
+i.e. which methods have been called to reach the current point of execution,
+local var for each method being executed
+
+- A thread can only access its own thread stack
+Local vars created by a thread are invisible to all other threads
+Even if 2 threads are executing the same code, they still create local vars on their own stack
+
+- A local var could be a primitive type, i.e. kept locally on stack
+A local var could be reference to object, i.e. reference on stack, actual object on heap
+
+2. Heap
+- Contain all objects created in app
+------------------------------------------------------------------------------------------------------------------------
+CPU
+- Modern computer has 2 or more CPU
+- Each CPU can execute only 1 thread at a time
+- Each CPU has its own registers and caches, but share RAM
+- CPU may flush updated data to RAM when it needs to overwrite those values in caches
+- Both JVM stack and heap reside in RAM. Part of it will be present in CPU registers and caches
+------------------------------------------------------------------------------------------------------------------------
+This leads to 2 main problems
+
+1. Visibility of shared objects
+If 2 or more threads are sharing object, without proper use of volatile or synchronized,
+updates to shared object made by 1 thread may not be visible to other threads
+(when update still reside on cache and not flushed back to main memory yet)
+
+2. Race conditions
+If 2 or more threads are sharing object, and more than one thread updates variables in that shared object,
+race condition may occur
+------------------------------------------------------------------------------------------------------------------------
+Solutions:
+1. Using volatile variable:
+- can ensure a given variable read directly from memory, and always written back to main memory
+- cannot avoid race conditions with multiple concurrent updates
+
+2. Using synchronized method/block:
+- can ensure that only one thread can enter a given critical section
+- also guarantee that all variables accessed inside synchronized block will be read from main memory,
+and when the thread exits the synchronized block, all updated vars will be flushed back to main memory again,
+regarless of whether the var is declared volatile or not
+
+
+
+
